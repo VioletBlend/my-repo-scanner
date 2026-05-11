@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import JSZip from "jszip/dist/jszip";
 
 type ScanResult = {
   fileCount: number;
@@ -43,30 +42,20 @@ export default function UploadForm() {
     }
   }
 
-  function downloadBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   function saveAsJson() {
     if (!result) return;
+
     const blob = new Blob(
       [JSON.stringify(result, null, 2)],
       { type: "application/json;charset=utf-8" }
     );
-    downloadBlob(blob, "scan-result.json");
-  }
 
-  async function saveAsZip() {
-    if (!result) return;
-    const zip = new JSZip();
-    zip.file("scan-result.json", JSON.stringify(result, null, 2));
-    const blob = await zip.generateAsync({ type: "blob" });
-    downloadBlob(blob, "scan-result.zip");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scan-result.json";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -92,9 +81,6 @@ export default function UploadForm() {
           <div className="actions">
             <button className="secondary" onClick={saveAsJson}>
               JSON で保存
-            </button>
-            <button className="secondary" onClick={saveAsZip}>
-              ZIP で保存
             </button>
           </div>
 
