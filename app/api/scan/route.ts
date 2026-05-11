@@ -8,8 +8,19 @@ type FileNode = {
   type: "file" | "directory";
   name: string;
   path: string;
+  role?: string;
   children?: FileNode[];
 };
+
+// 最低限の安全な役割判定
+function detectRole(fileName: string): string {
+  if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")) return "TypeScript Source";
+  if (fileName.endsWith(".js")) return "JavaScript Source";
+  if (fileName.endsWith(".json")) return "JSON Data";
+  if (fileName.endsWith(".md")) return "Markdown Document";
+  if (fileName.endsWith(".css")) return "CSS Stylesheet";
+  return "File";
+}
 
 function walkDirectory(dirPath: string, basePath: string): FileNode[] {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
@@ -30,7 +41,8 @@ function walkDirectory(dirPath: string, basePath: string): FileNode[] {
     return {
       type: "file",
       name: entry.name,
-      path: relativePath
+      path: relativePath,
+      role: detectRole(entry.name)
     };
   });
 }

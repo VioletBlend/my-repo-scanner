@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 
+type FileNode = {
+  type: "file" | "directory";
+  name: string;
+  path: string;
+  role?: string;
+  children?: FileNode[];
+};
+
 type ScanResult = {
   fileCount: number;
-  tree: any[];
+  tree: FileNode[];
 };
 
 export default function UploadForm() {
@@ -84,9 +92,14 @@ export default function UploadForm() {
             </button>
           </div>
 
-          <pre className="preview">
-            {JSON.stringify(result.tree.slice(0, 50), null, 2)}
-          </pre>
+          <div className="tree">
+            {result.tree.map((node) => (
+              <div key={node.path} className="node">
+                <span className="name">{node.name}</span>
+                {node.role && <span className="role">{node.role}</span>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -102,18 +115,18 @@ export default function UploadForm() {
         }
 
         .filePicker {
-          background: #f5f5f5;
+          background: #f3f3f3;
           padding: 10px 14px;
-          border-radius: 6px;
+          border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
           color: #333;
-          border: 1px solid #ddd;
+          border: 1px solid #ccc;
           transition: background 0.2s;
         }
 
         .filePicker:hover {
-          background: #e9e9e9;
+          background: #e7e7e7;
         }
 
         .filePicker input {
@@ -122,17 +135,17 @@ export default function UploadForm() {
 
         .primary {
           padding: 10px 18px;
-          background: #0066d6;
+          background: #2563eb;
           color: white;
           border: none;
-          border-radius: 6px;
+          border-radius: 4px;
           cursor: pointer;
           font-size: 14px;
           transition: background 0.2s;
         }
 
         .primary:hover {
-          background: #0052ad;
+          background: #1d4ed8;
         }
 
         .error {
@@ -144,8 +157,8 @@ export default function UploadForm() {
           margin-top: 32px;
           background: white;
           padding: 24px;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          border-radius: 6px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         }
 
         .count {
@@ -164,27 +177,11 @@ export default function UploadForm() {
           background: #444;
           color: white;
           border: none;
-          border-radius: 6px;
+          border-radius: 4px;
           cursor: pointer;
           font-size: 13px;
           transition: opacity 0.2s;
         }
 
         .secondary:hover {
-          opacity: 0.85;
-        }
-
-        .preview {
-          max-height: 400px;
-          overflow: auto;
-          background: #111;
-          color: #eee;
-          padding: 14px;
-          border-radius: 6px;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-      `}</style>
-    </div>
-  );
-}
+          opacity
