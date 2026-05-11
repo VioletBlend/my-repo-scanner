@@ -77,6 +77,7 @@ function walkDirectory(dirPath: string, basePath: string) {
     }
 
     const content = fs.readFileSync(fullPath, "utf-8");
+
     return {
       type: "file",
       name: entry.name,
@@ -84,3 +85,38 @@ function walkDirectory(dirPath: string, basePath: string) {
       role: analyzeFileRole(relativePath, content),
       size: content.length
     };
+  });
+}
+
+// -----------------------------
+// API Route
+// -----------------------------
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "repo-"));
+    const zip = new AdmZip(buffer);
+    zip.extractAllTo(tmpDir, true);
+
+    const tree = walkDirectory(tmpDir, tmpDir);
+
+    return NextResponse.json({
+      fileCount: tree.length,
+      tree
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
