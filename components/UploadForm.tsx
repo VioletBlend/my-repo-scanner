@@ -70,7 +70,7 @@ export default function UploadForm() {
   }
 
   return (
-    <div className="container">
+    <div className="wrapper">
       <form onSubmit={handleSubmit} className="form">
         <label className="filePicker">
           <span>ZIP ファイルを選択</span>
@@ -105,7 +105,7 @@ export default function UploadForm() {
       )}
 
       <style jsx>{`
-        .container {
+        .wrapper {
           margin-top: 24px;
         }
 
@@ -116,7 +116,7 @@ export default function UploadForm() {
         }
 
         .filePicker {
-          background: #f0f0f0;
+          background: #f5f5f5;
           padding: 10px 14px;
           border-radius: 6px;
           cursor: pointer;
@@ -127,7 +127,7 @@ export default function UploadForm() {
         }
 
         .filePicker:hover {
-          background: #e5e5e5;
+          background: #e9e9e9;
         }
 
         .filePicker input {
