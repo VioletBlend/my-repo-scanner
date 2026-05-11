@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import JSZip from "jszip";
+import JSZip from "jszip/dist/jszip";
 
 type ScanResult = {
   fileCount: number;
