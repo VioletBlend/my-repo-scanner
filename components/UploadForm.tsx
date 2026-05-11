@@ -50,11 +50,38 @@ export default function UploadForm() {
     }
   }
 
+  function saveResult() {
+    if (!result) return;
+
+    const text = JSON.stringify(result, null, 2);
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scan-result.txt";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div style={{ marginTop: 20 }}>
       <form onSubmit={handleSubmit}>
         <input type="file" name="file" accept=".zip" />
-        <button type="submit" disabled={loading} style={{ marginLeft: 8 }}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            marginLeft: 8,
+            padding: "8px 12px",
+            background: "#0070f3",
+            color: "white",
+            borderRadius: 4,
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
           {loading ? "スキャン中..." : "スキャンする"}
         </button>
       </form>
@@ -67,9 +94,24 @@ export default function UploadForm() {
 
       {result && (
         <div style={{ marginTop: 24 }}>
-          <h2>結果</h2>
+          <h2>解析結果</h2>
           <p>ファイル数: {result.fileCount}</p>
-          <p>先頭数件のツリー:</p>
+
+          <button
+            onClick={saveResult}
+            style={{
+              padding: "8px 12px",
+              marginBottom: 16,
+              background: "#28a745",
+              color: "white",
+              borderRadius: 4,
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            解析結果を保存
+          </button>
+
           <pre
             style={{
               maxHeight: 400,

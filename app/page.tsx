@@ -2,10 +2,20 @@ import UploadForm from "../components/UploadForm";
 
 export default function Home() {
   return (
-    <main style={{ padding: 40, fontFamily: "system-ui" }}>
-      <h1>Repo Crawler (ZIP / No API)</h1>
-      <p>ローカルで git clone したリポジトリを ZIP にしてアップロードしてください。</p>
+    <div
+      style={{
+        background: "white",
+        padding: 32,
+        borderRadius: 8,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}
+    >
+      <h1 style={{ marginTop: 0 }}>ZIP リポジトリ解析ツール</h1>
+      <p style={{ color: "#555" }}>
+        ローカルのリポジトリを ZIP にしてアップロードすると、構造と内容を解析します。
+      </p>
+
       <UploadForm />
-    </main>
+    </div>
   );
 }
