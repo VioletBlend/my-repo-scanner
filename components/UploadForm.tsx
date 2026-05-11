@@ -25,7 +25,9 @@ export default function UploadForm() {
     setError(null);
     setResult(null);
 
-    const file = (e.currentTarget.file as any).files?.[0];
+    const fileInput = (e.currentTarget.elements.namedItem("file") as HTMLInputElement);
+    const file = fileInput?.files?.[0];
+
     if (!file) {
       setError("ZIP ファイルを選択してください。");
       return;
@@ -184,4 +186,34 @@ export default function UploadForm() {
         }
 
         .secondary:hover {
-          opacity
+          opacity: 0.85;
+        }
+
+        .tree {
+          margin-top: 16px;
+          border-top: 1px solid #eee;
+          padding-top: 16px;
+        }
+
+        .node {
+          display: flex;
+          justify-content: space-between;
+          padding: 6px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .name {
+          font-weight: 500;
+        }
+
+        .role {
+          font-size: 12px;
+          color: #666;
+          background: #f0f0f0;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+      `}</style>
+    </div>
+  );
+}
