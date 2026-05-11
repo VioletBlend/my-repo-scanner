@@ -34,10 +34,7 @@ export default function UploadForm() {
         body: formData
       });
 
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
-
+      if (!res.ok) throw new Error(await res.text());
       setResult(await res.json());
     } catch (err: any) {
       setError(err.message || "エラーが発生しました");
@@ -46,23 +43,7 @@ export default function UploadForm() {
     }
   }
 
-  function saveAsJson() {
-    if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], {
-      type: "application/json"
-    });
-    triggerDownload(blob, "scan-result.json");
-  }
-
-  async function saveAsZip() {
-    if (!result) return;
-    const zip = new JSZip();
-    zip.file("scan-result.json", JSON.stringify(result, null, 2));
-    const blob = await zip.generateAsync({ type: "blob" });
-    triggerDownload(blob, "scan-result.zip");
-  }
-
-  function triggerDownload(blob: Blob, filename: string) {
+  function downloadBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -71,127 +52,151 @@ export default function UploadForm() {
     URL.revokeObjectURL(url);
   }
 
+  function saveAsJson() {
+    if (!result) return;
+    const blob = new Blob(
+      [JSON.stringify(result, null, 2)],
+      { type: "application/json;charset=utf-8" }
+    );
+    downloadBlob(blob, "scan-result.json");
+  }
+
+  async function saveAsZip() {
+    if (!result) return;
+    const zip = new JSZip();
+    zip.file("scan-result.json", JSON.stringify(result, null, 2));
+    const blob = await zip.generateAsync({ type: "blob" });
+    downloadBlob(blob, "scan-result.zip");
+  }
+
   return (
-    <div className="upload-wrapper">
-      <form onSubmit={handleSubmit} className="upload-form">
-        <label className="file-label">
+    <div className="container">
+      <form onSubmit={handleSubmit} className="form">
+        <label className="filePicker">
           <span>ZIP ファイルを選択</span>
           <input type="file" name="file" accept=".zip" />
         </label>
 
-        <button className="primary-btn" disabled={loading}>
-          {loading ? "解析中..." : "解析する"}
+        <button className="primary" disabled={loading}>
+          {loading ? "解析中…" : "解析する"}
         </button>
       </form>
 
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {result && (
-        <div className="result-box">
+        <div className="result">
           <h2>解析結果</h2>
-          <p className="file-count">ファイル数: {result.fileCount}</p>
+          <p className="count">ファイル数: {result.fileCount}</p>
 
-          <div className="button-row">
-            <button className="secondary-btn" onClick={saveAsJson}>
+          <div className="actions">
+            <button className="secondary" onClick={saveAsJson}>
               JSON で保存
             </button>
-            <button className="secondary-btn" onClick={saveAsZip}>
+            <button className="secondary" onClick={saveAsZip}>
               ZIP で保存
             </button>
           </div>
 
-          <pre className="result-preview">
+          <pre className="preview">
             {JSON.stringify(result.tree.slice(0, 50), null, 2)}
           </pre>
         </div>
       )}
 
       <style jsx>{`
-        .upload-wrapper {
+        .container {
           margin-top: 24px;
         }
 
-        .upload-form {
+        .form {
           display: flex;
-          align-items: center;
           gap: 12px;
+          align-items: center;
         }
 
-        .file-label {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          background: #e9e9e9;
+        .filePicker {
+          background: #f0f0f0;
+          padding: 10px 14px;
           border-radius: 6px;
           cursor: pointer;
+          font-size: 14px;
+          color: #333;
+          border: 1px solid #ddd;
+          transition: background 0.2s;
         }
 
-        .file-label input {
+        .filePicker:hover {
+          background: #e5e5e5;
+        }
+
+        .filePicker input {
           display: none;
         }
 
-        .primary-btn {
-          padding: 8px 16px;
-          background: #0070f3;
+        .primary {
+          padding: 10px 18px;
+          background: #0066d6;
           color: white;
           border: none;
           border-radius: 6px;
           cursor: pointer;
+          font-size: 14px;
           transition: background 0.2s;
         }
 
-        .primary-btn:hover {
-          background: #0059c9;
+        .primary:hover {
+          background: #0052ad;
         }
 
-        .error-text {
+        .error {
           color: #d33;
           margin-top: 12px;
         }
 
-        .result-box {
+        .result {
           margin-top: 32px;
-          padding: 20px;
-          background: #fff;
+          background: white;
+          padding: 24px;
           border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .file-count {
+        .count {
           margin-bottom: 16px;
           color: #444;
         }
 
-        .button-row {
+        .actions {
           display: flex;
           gap: 12px;
           margin-bottom: 16px;
         }
 
-        .secondary-btn {
+        .secondary {
           padding: 8px 14px;
           background: #444;
           color: white;
           border: none;
           border-radius: 6px;
           cursor: pointer;
+          font-size: 13px;
           transition: opacity 0.2s;
         }
 
-        .secondary-btn:hover {
+        .secondary:hover {
           opacity: 0.85;
         }
 
-        .result-preview {
+        .preview {
           max-height: 400px;
           overflow: auto;
           background: #111;
           color: #eee;
-          padding: 12px;
+          padding: 14px;
           border-radius: 6px;
           font-size: 13px;
-          line-height: 1.4;
+          line-height: 1.5;
         }
       `}</style>
     </div>

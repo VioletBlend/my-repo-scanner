@@ -4,136 +4,83 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-export const runtime = "nodejs";
+// -----------------------------
+// ① ファイルの役割を推測
+// -----------------------------
+function analyzeFileRole(filePath: string, content: string) {
+  const lower = content.toLowerCase();
 
-type FileNode = {
-  type: "file";
-  name: string;
-  path: string;
-  content: string;
-};
-
-type DirNode = {
-  type: "directory";
-  name: string;
-  path: string;
-  children: NodeType[];
-};
-
-type NodeType = FileNode | DirNode;
-
-export async function POST(req: NextRequest) {
-  try {
-    const form = await req.formData();
-    const file = form.get("file") as File | null;
-
-    if (!file) {
-      return NextResponse.json(
-        { error: "file がありません" },
-        { status: 400 }
-      );
-    }
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "repo-zip-"));
-    const zip = new AdmZip(buffer);
-    zip.extractAllTo(tempDir, true);
-
-    const tree: NodeType[] = [];
-
-    function walk(currentPath: string, basePath: string): NodeType[] {
-      const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-      const nodes: NodeType[] = [];
-
-      for (const entry of entries) {
-        const fullPath = path.join(currentPath, entry.name);
-        const relPath = path.relative(basePath, fullPath);
-
-        if (entry.isDirectory() && entry.name === ".git") {
-          continue;
-        }
-
-        if (entry.isDirectory()) {
-          const children = walk(fullPath, basePath);
-          nodes.push({
-            type: "directory",
-            name: entry.name,
-            path: relPath,
-            children
-          });
-        } else {
-          let content = "";
-          try {
-            content = fs.readFileSync(fullPath, "utf8");
-          } catch {
-            content = "";
-          }
-
-          nodes.push({
-            type: "file",
-            name: entry.name,
-            path: relPath,
-            content
-          });
-        }
-      }
-
-      return nodes;
-    }
-
-    const rootEntries = fs.readdirSync(tempDir, { withFileTypes: true });
-    for (const entry of rootEntries) {
-      const fullPath = path.join(tempDir, entry.name);
-      const relPath = path.relative(tempDir, fullPath);
-
-      if (entry.isDirectory()) {
-        tree.push({
-          type: "directory",
-          name: entry.name,
-          path: relPath,
-          children: walk(fullPath, tempDir)
-        });
-      } else {
-        let content = "";
-        try {
-          content = fs.readFileSync(fullPath, "utf8");
-        } catch {
-          content = "";
-        }
-
-        tree.push({
-          type: "file",
-          name: entry.name,
-          path: relPath,
-          content
-        });
-      }
-    }
-
-    const fileCount = countFiles(tree);
-
-    return NextResponse.json({
-      fileCount,
-      tree
-    });
-  } catch (e: any) {
-    return NextResponse.json(
-      { error: e?.message || "internal error" },
-      { status: 500 }
-    );
+  if (filePath.includes("api/") || lower.includes("nextresponse")) {
+    return "API Route (Next.js)";
   }
+
+  if (lower.includes("export default function page")) {
+    return "Page Component (Next.js)";
+  }
+
+  if (lower.includes("use state") || lower.includes("useeffect")) {
+    return "React Component";
+  }
+
+  if (lower.includes("class ") && lower.includes("service")) {
+    return "Service Class";
+  }
+
+  if (filePath.endsWith(".config.js") || filePath.endsWith(".config.ts")) {
+    return "Configuration File";
+  }
+
+  if (filePath.endsWith(".json")) {
+    return "JSON Data File";
+  }
+
+  if (filePath.endsWith(".md")) {
+    return "Documentation";
+  }
+
+  return "General Source File";
 }
 
-function countFiles(nodes: NodeType[]): number {
-  let count = 0;
-  for (const node of nodes) {
-    if (node.type === "file") {
-      count += 1;
-    } else {
-      count += countFiles(node.children);
-    }
-  }
-  return count;
+// -----------------------------
+// ② ディレクトリの意味付け
+// -----------------------------
+function analyzeDirectoryPurpose(dir: string) {
+  if (dir === "app") return "Next.js App Router のルート";
+  if (dir === "components") return "UI コンポーネント";
+  if (dir === "api") return "サーバー API";
+  if (dir === "lib") return "共通ロジック";
+  if (dir === "hooks") return "React Hooks";
+  if (dir === "utils") return "ユーティリティ関数";
+  if (dir === "public") return "静的ファイル";
+
+  return "一般的なフォルダ";
 }
+
+// -----------------------------
+// ZIP 展開 → 再帰解析
+// -----------------------------
+function walkDirectory(dirPath: string, basePath: string) {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  return entries.map((entry) => {
+    const fullPath = path.join(dirPath, entry.name);
+    const relativePath = path.relative(basePath, fullPath);
+
+    if (entry.isDirectory()) {
+      return {
+        type: "directory",
+        name: entry.name,
+        path: relativePath,
+        purpose: analyzeDirectoryPurpose(entry.name),
+        children: walkDirectory(fullPath, basePath)
+      };
+    }
+
+    const content = fs.readFileSync(fullPath, "utf-8");
+    return {
+      type: "file",
+      name: entry.name,
+      path: relativePath,
+      role: analyzeFileRole(relativePath, content),
+      size: content.length
+    };
